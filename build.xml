@@ -11,7 +11,7 @@
     <target name="javadoc">
     	<javadoc
     		doctitle="Story Graph Tools"
-    		classpath=".;lib/story-graphs/build/jar/sg.jar;lib/sabre/build/jar/sabre.jar"
+    		classpath=".;lib/story-graph/build/jar/sg.jar;lib/sabre/build/jar/sabre.jar"
     		sourcepath="src"
     		destdir="doc"
     		packagenames="
@@ -26,7 +26,7 @@
     </target>
 	<target name="compile">
 		<javac
-			classpath=".;lib/story-graphs/build/jar/sg.jar;lib/sabre/build/jar/sabre.jar"
+			classpath=".;lib/story-graph/build/jar/sg.jar;lib/sabre/build/jar/sabre.jar"
 			srcdir="src"
 			destdir="bin"
 			includeantruntime="false"
@@ -41,7 +41,7 @@
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
 			<zipgroupfileset dir="." includes="lib/sabre/build/jar/sabre.jar" />
-			<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+			<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-explain">
@@ -51,7 +51,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-			<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+			<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-rmunx">
@@ -61,7 +61,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-rmdis">
@@ -71,7 +71,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-rmunu">
@@ -81,7 +81,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-rmdup">
@@ -91,7 +91,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-sort">
@@ -101,7 +101,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-clean">
@@ -111,7 +111,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 	<target name="sg-explore">
@@ -121,7 +121,7 @@
         	</manifest>
         	<fileset dir="src"/>
         	<fileset dir="bin"/>
-        	<zipgroupfileset dir="." includes="lib/story-graphs/build/jar/sg.jar" />
+        	<zipgroupfileset dir="." includes="lib/story-graph/build/jar/sg.jar" />
         </jar>
     </target>
 </project>
