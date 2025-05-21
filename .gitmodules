@@ -1,0 +1,7 @@
+[submodule "lib/story-graph"]
+	path = lib/story-graph
+	url = https://github.com/sgware/story-graph
+[submodule "lib/sabre"]
+	path = lib/sabre
+	url = https://github.com/sgware/sabre
+	branch = v0.8
