@@ -32,8 +32,6 @@ public abstract class SimpleStoryGraphTool extends StoryGraphTool {
 	 */
 	public SimpleStoryGraphTool(ToolArguments arguments) {
 		super(arguments);
-		arguments.require(0);
-		arguments.getValue(OUTPUT);
 	}
 	
 	/**
@@ -83,6 +81,8 @@ public abstract class SimpleStoryGraphTool extends StoryGraphTool {
 			return;
 		}
 		try {
+			arguments.require(0);
+			arguments.getValue(OUTPUT);
 			arguments.checkUnused();
 			System.out.println(getTitle());
 			StoryGraph graph = new StoryGraph();
