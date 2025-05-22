@@ -82,9 +82,11 @@ public class GraphSnapshot {
 			row[0] = "  " + entry.getKey() + ":";
 			labelPad = Math.max(labelPad, ((String) row[0]).length());
 			row[1] = entry.getValue();
-			valuePad = Math.max(valuePad, number.format(entry.getValue()).length());
-			if(after != null)
+			valuePad = Math.max(valuePad, number.format(row[1]).length());
+			if(after != null) {
 				row[2] = after.statistics.get(entry.getKey());
+				valuePad = Math.max(valuePad, number.format(row[2]).length());
+			}
 			rows[index++] = row;
 		}
 		for(Object[] row : rows) {
