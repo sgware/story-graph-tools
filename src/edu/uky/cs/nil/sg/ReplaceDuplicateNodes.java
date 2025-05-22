@@ -91,12 +91,14 @@ public class ReplaceDuplicateNodes implements Task {
 		status.set("Creating edge stubs", graph.edges.size());
 		BigArrayList<EdgeStub> stubs = new BigArrayList<>();
 		for(Edge edge : graph.edges) {
-			if(toRemove.contains(edge.tail) || toRemove.contains(edge.head)) {
-				Node tail = replacements.get(edge.tail);
-				Node head = replacements.get(edge.head);
-				if(!graph.edges.contains(tail, edge.label, head))
-					stubs.add(new EdgeStub(replacements.get(edge.tail), edge.label, replacements.get(edge.head)));
-			}
+			Node tail = edge.tail;
+			if(toRemove.contains(tail))
+				tail = replacements.get(tail);
+			Node head = edge.head;
+			if(toRemove.contains(head))
+				head = replacements.get(head);
+			if(!graph.edges.contains(tail, edge.label, head))
+				stubs.add(new EdgeStub(tail, edge.label, head));
 			status.increment();
 		}
 		graph.nodes.remove(node -> toRemove.contains(node), status);
