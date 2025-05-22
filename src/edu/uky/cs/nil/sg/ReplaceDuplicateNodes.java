@@ -119,8 +119,8 @@ public class ReplaceDuplicateNodes implements Task {
 			TemporalEdge edge2 = node2.edges.temporal.out.get(edge1.label);
 			if(edge2 == null)
 				return false;
-			Node head1 = edge1.head;
-			Node head2 = replacements.get(head1);
+			Node head1 = replacements.get(edge1.head);
+			Node head2 = replacements.get(edge2.head);
 			if(head1 != head2)
 				return false;
 		}
