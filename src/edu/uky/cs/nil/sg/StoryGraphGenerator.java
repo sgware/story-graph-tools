@@ -11,9 +11,10 @@ import edu.uky.cs.nil.sabre.graph.StateNode;
  * be the problem's initial state. The graph will be generated using a complete
  * breadth-first expansion (optionally {@link #limit limited} to a certain
  * depth). For every node, a {@link TemporalEdge temporal edge} will be created
- * for every action whose precondition is satisfied in that node's state. Every
- * node which can be reached via any number of {@link EpistemicEdge epistemic
- * edges} will also be generated.
+ * for every action whose precondition is satisfied in that node's state (unless
+ * taking the action would exceed the {@link #limit depth limit}). Every node
+ * which can be reached via any number of {@link EpistemicEdge epistemic edges}
+ * will be generated.
  * 
  * @author Stephen G. Ware
  */
@@ -26,10 +27,10 @@ public class StoryGraphGenerator implements Task {
 	public final CompiledProblem problem;
 	
 	/** The Sabre state graph corresponding to the story graph */
-	public final StateGraph states;
+	public final StateGraph stateGraph;
 	
 	/** The story graph being generated */
-	public final StoryGraph story;
+	public final StoryGraph storyGraph;
 	
 	/**
 	 * The limit on the depth of temporal generation; a limit of 3 means that
@@ -39,18 +40,6 @@ public class StoryGraphGenerator implements Task {
 	public final int limit;
 	
 	/**
-	 * The queue of states waiting to be expanded that were reached via an
-	 * epistemic edge
-	 */
-	private final BigQueue<StateNode> temporal = new BigQueue<>();
-	
-	/**
-	 * The queue of states waiting to be expanded that were reached via a
-	 * temporal edge
-	 */
-	private final BigQueue<StateNode> epistemic = new BigQueue<>();
-	
-	/**
 	 * Maps {@link StateNode state graph nodes} (via their {@link StateNode#id
 	 * ID numbers} to {@link Node story graph nodes}
 	 */
@@ -58,81 +47,102 @@ public class StoryGraphGenerator implements Task {
 	
 	/**
 	 * Maps {@link StateNode state graph nodes} to their corresponding {@link
-	 * State story graph states}
+	 * State story graph state objects}
 	 */
-	private final StateMapping map;
+	private final StateMapping states;
+	
+	/** The queue of state nodes waiting to be expanded */
+	private final BigQueue<StateNode> queue = new BigQueue<>();
 	
 	/**
 	 * Constructs a new story graph generator for a given Sabre problem and with
-	 * a given depth limit.
+	 * a given depth limit. This constructor will also create all of the {@link
+	 * Character character}, {@link Fluent fluent}, and {@link Action action}
+	 * symbols in the story graph.
 	 * 
 	 * @param problem the Sabre problem used to generate the story graph
 	 * @param limit the temporal limit on the generation
+	 * @param status a status object that will be updated while this constructor
+	 * runs to reflect its current progress
 	 */
-	public StoryGraphGenerator(CompiledProblem problem, int limit) {
+	public StoryGraphGenerator(CompiledProblem problem, int limit, Status status) {
+		status.setMessage("Creating character and fluent symbols");
 		this.problem = problem;
-		this.states = new StateGraph(problem);
-		this.story = new StoryGraph();
+		this.stateGraph = new StateGraph(problem);
+		this.storyGraph = new StoryGraph();
 		this.limit = limit;
-		this.map = new StateMapping(states, story);
-		for(edu.uky.cs.nil.sabre.Action action : problem.actions) {
-			this.story.actions.add(action.toString());
-			for(edu.uky.cs.nil.sabre.logic.Parameter consenting : action.consenting)
-				if(consenting instanceof edu.uky.cs.nil.sabre.Character character)
-					this.story.actions.add(this.story.actions.require(action.toString()), this.story.characters.require(character.toString()));
+		this.states = new StateMapping(stateGraph, storyGraph);
+		status.setMessage("Creating action tree");
+		problem.actions.buildTree(new edu.uky.cs.nil.sabre.util.Worker.Status());
+		status.set("Creating action symbols", (long) problem.actions.size());
+		for(edu.uky.cs.nil.sabre.Action problemAction : problem.actions) {
+			Action storyAction = storyGraph.actions.add(problemAction.toString());
+			for(edu.uky.cs.nil.sabre.logic.Parameter consenting : problemAction.consenting)
+				storyGraph.actions.add(storyAction, storyGraph.characters.get(consenting.toString()));
 		}
 	}
 	
 	@Override
 	public void run(Status status) throws Exception {
-		add(states.root);
-		temporal.push(states.root);
-		int depth = -1;
-		while(temporal.size() > 0 && (depth < limit || limit == UNLIMITED_DEPTH)) {
-			long size = temporal.size();
-			status.set("Generating story graph depth " + (++depth), size);
+		int depth = 0;
+		status.setMessage("Generating story graph, depth " + depth);
+		push(stateGraph.root);
+		while(queue.size() > 0) {
+			long size = queue.size();
+			status.set("Generating story graph, depth " + (++depth), size);
 			for(long i = 0; i < size; i++) {
-				visit(temporal.pop());
-				while(epistemic.size() > 0)
-					visit(epistemic.pop());
+				StateNode stateNode = queue.pop();
+				Node tail = getNode(stateNode);
+				for(edu.uky.cs.nil.sabre.Action action : problem.actions.getEvery(stateNode)) {
+					StateNode after = stateNode.getAfter(action).getAfterTriggers();
+					Node head = getNode(after);
+					if(head == null && (depth < limit || limit == UNLIMITED_DEPTH)) {
+						push(after);
+						head = addNode(after);
+					}
+					if(head != null)
+						storyGraph.edges.temporal.add(tail, storyGraph.actions.require(action.toString()), head);
+				}
 				status.increment();
 			}
 		}
-		if(limit == UNLIMITED_DEPTH)
-			status.setMessage("Full story graph generated");
-		else
-			status.setMessage("Story graph generated to depth " + limit);
 	}
 	
-	private void visit(StateNode tail) {
-		for(edu.uky.cs.nil.sabre.Action action : problem.actions.getEvery(tail)) {
-			StateNode head = tail.getAfter(action).getAfterTriggers();
-			if(node(head) == null) {
-				temporal.push(head);
-				add(head);
+	private final void push(StateNode stateNode) {
+		Node storyNode = getNode(stateNode);
+		if(storyNode != null)
+			return;
+		BigQueue<StateNode> temporary = new BigQueue<>();
+		temporary.push(stateNode);
+		while(temporary.size() > 0) {
+			stateNode = temporary.pop();
+			queue.push(stateNode);
+			Node tail = addNode(stateNode);
+			for(edu.uky.cs.nil.sabre.Character character : stateNode.graph.characters) {
+				StateNode beliefs = stateNode.getBeliefs(character);
+				Node head = getNode(beliefs);
+				if(head == null) {
+					temporary.push(beliefs);
+					head = addNode(beliefs);
+				}
+				storyGraph.edges.epistemic.add(tail, storyGraph.characters.require(character.toString()), head);
 			}
-			story.edges.temporal.add(node(tail), story.actions.get(action.toString()), node(head));
-		}
-		for(edu.uky.cs.nil.sabre.Character character : problem.universe.characters) {
-			StateNode head = tail.getBeliefs(character);
-			if(node(head) == null) {
-				epistemic.push(head);
-				add(head);
-			}
-			story.edges.epistemic.add(node(tail), story.characters.get(character.toString()), node(head));
 		}
 	}
 	
-	private final Node node(StateNode state) {
-		if(state.id < nodes.size())
-			return nodes.get(state.id);
+	private final Node getNode(StateNode stateNode) {
+		if(stateNode.id < nodes.size())
+			return nodes.get(stateNode.id);
 		else
 			return null;
 	}
 	
-	private final Node add(StateNode state) {
-		Node node = story.nodes.add(map.get(state));
-		nodes.set(state.id, node);
-		return node;
+	private final Node addNode(StateNode stateNode) {
+		Node storyNode = getNode(stateNode);
+		if(storyNode == null) {
+			storyNode = storyGraph.nodes.add(states.get(stateNode));
+			nodes.set(stateNode.id, storyNode);
+		}
+		return storyNode;
 	}
 }

@@ -208,20 +208,19 @@ public class Generate extends StoryGraphTool {
 	}
 	
 	private StoryGraph generate(CompiledProblem problem, int limit, Status status) throws Exception {
-		status.setMessage("Creating story graph");
-		StoryGraphGenerator generator = new StoryGraphGenerator(problem, limit);
+		StoryGraphGenerator generator = new StoryGraphGenerator(problem, limit, status);
 		String title = arguments.getValue(TITLE);
 		if(title == null)
 			title = problem.name;
-		generator.story.setTitle(title);
+		generator.storyGraph.setTitle(title);
 		String authors = arguments.getValue(AUTHORS);
 		if(authors != null)
-			generator.story.setAuthors(authors);
+			generator.storyGraph.setAuthors(authors);
 		String player = arguments.getValue(PLAYER);
 		if(player != null)
-			generator.story.characters.setPlayer(generator.story.characters.require(player), true);
+			generator.storyGraph.characters.setPlayer(generator.storyGraph.characters.require(player), true);
 		generator.run(status);
-		return generator.story;
+		return generator.storyGraph;
 	}
 	
 	private final void writeStoryGraph(StoryGraph graph) throws Exception {
