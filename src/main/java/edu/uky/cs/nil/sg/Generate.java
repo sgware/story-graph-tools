@@ -132,11 +132,9 @@ public class Generate extends StoryGraphTool {
 			return;
 		}
 		try {
-			arguments.getValue(OUTPUT);
-			arguments.getValue(DEPTH);
-			arguments.getValue(TITLE);
-			arguments.getValue(AUTHORS);
-			arguments.getValue(PLAYER);
+			arguments.get(0);
+			for(Option option : getOptions())
+				arguments.contains(option);
 			arguments.checkUnused();
 			System.out.println(getTitle());
 			CompiledProblem problem = readProblem();
