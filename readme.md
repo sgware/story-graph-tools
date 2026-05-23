@@ -36,12 +36,15 @@ graph.
 graph by choosing which node to visit next.
 
 This project also contains some utilities for creating story graph tools (like
-the [StoryGraphTool](src/edu/uky/cs/nil/sg/StoryGraphTool.java) and
-[SimpleStoryGraphTool](src/edu/uky/cs/nil/sg/SimpleStoryGraphTool.java) classes)
-and basic data structures with large capacities for dealing with large story
-graphs (like [BigMap](src/edu/uky/cs/nil/sg/BigMap.java),
-[BigSet](src/edu/uky/cs/nil/sg/BigMap.java), and
-[BigQueue](src/edu/uky/cs/nil/sg/BigQueue.java)).
+the
+[StoryGraphTool](https://sgware.github.io/story-graph-tools/edu/uky/cs/nil/sg/StoryGraphTool.html)
+and
+[SimpleStoryGraphTool](https://sgware.github.io/story-graph-tools/edu/uky/cs/nil/sg/SimpleStoryGraphTool.html)
+classes) and basic data structures with large capacities for dealing with large
+story graphs (like
+[BigMap](https://sgware.github.io/story-graph-tools/edu/uky/cs/nil/sg/BigMap.html),
+[BigSet](https://sgware.github.io/story-graph-tools/edu/uky/cs/nil/sg/BigSet.html), and
+[BigQueue](https://sgware.github.io/story-graph-tools/edu/uky/cs/nil/sg/BigQueue.html)).
 
 ## Download and Documentation
 
