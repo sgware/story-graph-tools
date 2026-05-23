@@ -185,6 +185,9 @@ public abstract class StoryGraphTool implements Task {
 			return;
 		}
 		try {
+			for(Option option : getOptions())
+				arguments.contains(option);
+			arguments.checkUnused();
 			System.out.println(getTitle());
 			Task.run(this);
 		}

@@ -81,8 +81,8 @@ public abstract class SimpleStoryGraphTool extends StoryGraphTool {
 			return;
 		}
 		try {
-			arguments.require(0);
-			arguments.getValue(OUTPUT);
+			for(Option option : getOptions())
+				arguments.contains(option);
 			arguments.checkUnused();
 			System.out.println(getTitle());
 			StoryGraph graph = new StoryGraph();
