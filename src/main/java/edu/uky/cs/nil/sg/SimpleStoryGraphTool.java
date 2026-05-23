@@ -81,6 +81,7 @@ public abstract class SimpleStoryGraphTool extends StoryGraphTool {
 			return;
 		}
 		try {
+			arguments.get(0);
 			for(Option option : getOptions())
 				arguments.contains(option);
 			arguments.checkUnused();
