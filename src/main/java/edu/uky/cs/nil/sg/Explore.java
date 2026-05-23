@@ -74,6 +74,25 @@ public class Explore extends StoryGraphTool {
 	}
 	
 	@Override
+	public void run() {
+		if(arguments.size() == 0 || arguments.contains(HELP)) {
+			System.out.println(getHelp());
+			return;
+		}
+		try {
+			arguments.get(0);
+			for(Option option : getOptions())
+				arguments.getValue(option);
+			arguments.checkUnused();
+			System.out.println(getTitle());
+			run(new Status());
+		}
+		catch(Throwable throwable) {
+			System.err.println("Error: " + throwable.getMessage());
+		}
+	}
+	
+	@Override
 	public void run(Status status) throws Exception {
 		StoryGraph graph = new StoryGraph();
 		Task.run(s -> graph.read(new File(arguments.require(0)), s), status, true);
