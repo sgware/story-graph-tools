@@ -43,11 +43,49 @@ graphs (like [BigMap](src/edu/uky/cs/nil/sg/BigMap.java),
 [BigSet](src/edu/uky/cs/nil/sg/BigMap.java), and
 [BigQueue](src/edu/uky/cs/nil/sg/BigQueue.java)).
 
+## Download and Documentation
+
+These tools are written in pure Java and depend on this
+[library](https://github.com/sgware/story-graph). You can 
+[download the pre-compiled JAR files here](https://github.com/sgware/story-graph-tools/tree/main/build/jar).
+
+The [JavaDoc API is here](https://sgware.github.io/story-graph-tools).
+
+You can download and compile these tools from source using
+[Maven](http://maven.apache.org/) like this:
+```
+git clone https://github.com/sgware/story-graph.git
+cd story-graph
+mvn clean install
+git clone https://github.com/sgware/sabre.git
+cd sabre
+mvn clean install
+git clone https://github.com/sgware/story-graph-tools.git
+cd story-graph-tools
+mvn clean install
+```
+
+You can add these tools to a Maven project's `pom.xml` file like this:
+```
+<project>
+  ...
+  <dependencies>
+    <!-- Story Graph Tools -->
+    <dependency>
+      <groupId>edu.uky.cs.nil</groupId>
+      <artifactId>story-graph-tools</artifactId>
+      <version>1.0.0</version> <!-- use most recent version -->
+    </dependency>
+  </dependencies>
+  ...
+</project>
+```
+
 ## Example Usage
 
 ```
-# Clone this project, including the Story Graph Library as a submodule.
-git clone --recurse-submodules https://github.com/sgware/story-graph-tools
+# Clone this project.
+git clone https://github.com/sgware/story-graph-tools
 # Clone some example Sabre problems.
 cd story-graph-tools/build/jar
 git clone https://github.com/sgware/sabre-benchmarks
@@ -93,7 +131,7 @@ software for other kinds of projects.
 
 ## Version History
 
-- Version 0.9: First public release.
+- Version 1.0.0: First public release.
 
 ## Citation
 
