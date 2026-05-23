@@ -134,7 +134,7 @@ public class Generate extends StoryGraphTool {
 		try {
 			arguments.get(0);
 			for(Option option : getOptions())
-				arguments.contains(option);
+				arguments.getValue(option);
 			arguments.checkUnused();
 			System.out.println(getTitle());
 			CompiledProblem problem = readProblem();
