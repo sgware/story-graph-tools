@@ -60,9 +60,11 @@ You can download and compile these tools from source using
 git clone https://github.com/sgware/story-graph.git
 cd story-graph
 mvn clean install
+cd ..
 git clone https://github.com/sgware/sabre.git
 cd sabre
 mvn clean install
+cd ..
 git clone https://github.com/sgware/story-graph-tools.git
 cd story-graph-tools
 mvn clean install
