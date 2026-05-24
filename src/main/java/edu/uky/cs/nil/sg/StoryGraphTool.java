@@ -190,7 +190,7 @@ public abstract class StoryGraphTool implements Task {
 				arguments.getValue(option);
 			arguments.checkUnused();
 			System.out.println(getTitle());
-			Task.run(this);
+			Task.run(this, new Status(), true);
 		}
 		catch(Throwable throwable) {
 			System.err.println("Error: " + throwable.getMessage());
