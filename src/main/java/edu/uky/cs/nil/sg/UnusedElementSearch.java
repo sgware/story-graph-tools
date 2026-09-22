@@ -34,12 +34,12 @@ public class UnusedElementSearch extends BreadthFirstSearch implements Predicate
 	private final BigSet<Plan> plans;
 	
 	/**
-	 * Constructs a new unused element search task.
+	 * Constructs an unused element search task.
 	 * 
-	 * @param graph the story graph to be searched for unused elements
+	 * @param graph the story graph that will be searched
 	 */
 	public UnusedElementSearch(StoryGraph graph) {
-		super(graph, true);
+		super(graph);
 		this.characters = new HashSet<>(graph.characters.size());
 		this.fluents = new HashMap<>(graph.fluents.size());
 		for(Fluent fluent : graph.fluents)
@@ -59,8 +59,13 @@ public class UnusedElementSearch extends BreadthFirstSearch implements Predicate
 				values.add(nominal);
 		}
 		states.add(node.getState());
-		for(Explanation explanation : node.explanations)
+		for(Explanation explanation : node.explanations) {
+			if(explanation.character != null)
+				characters.add(explanation.character);
+			for(Action action : explanation.getPlan())
+				actions.add(action);
 			plans.add(explanation.getPlan());
+		}
 		super.visit(node);
 	}
 	

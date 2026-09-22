@@ -4,196 +4,133 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A parent class for {@link StoryGraph story graph} tools that provides some
- * basic utilities for parsing {@link ToolArguments command line arguments} and
- * printing {@link #getHelp() help text}.
+ * A parent class for {@link StoryGraph story graph} tools which provides
+ * meta-data and methods for automatically generating {@link
+ * #getDocumentation() documentation}.
  * 
  * @author Stephen G. Ware
  */
-public abstract class StoryGraphTool implements Task {
+public abstract class StoryGraphTool {
 	
-	/** An option that causes a story graph tool to print its help text */
-	protected static final Option HELP = new Option("h", "print this message and terminate");
-	
-	/** The arguments used to configure this tool */
-	protected final ToolArguments arguments;
+	/** An argument that causes the tool to display its documentation */
+	protected static final Argument.Flag HELP = new Argument.Flag("help", "display documentation and terminate");
 	
 	/**
-	 * Constructs a new story graph tool from a list of arguments.
-	 * 
-	 * @param arguments the argument used to configure this tool
-	 */
-	public StoryGraphTool(ToolArguments arguments) {
-		this.arguments = arguments;
-	}
-	
-	/**
-	 * Constructs a new story graph tool from an array of string arguments.
-	 * 
-	 * @param args the arguments used to configure this tool
-	 */
-	public StoryGraphTool(String[] args) {
-		this(new ToolArguments(args));
-	}
-	
-	/**
-	 * Constructs a new story graph tool with no configuration arguments.
+	 * Constructs a new story graph tool.
 	 */
 	public StoryGraphTool() {
-		this(new String[0]);
-	}
-	
-	@Override
-	public String toString() {
-		return getTitle();
+		// default constructor
 	}
 	
 	/**
 	 * Returns the name of this tool.
 	 * 
-	 * @return the tool's name
+	 * @return the name of this tool
 	 */
 	public abstract String getName();
 	
 	/**
-	 * Returns a string that expresses the version number of this tool or null
-	 * if there is no meaningful version number.
+	 * Returns the version number of this tool as a string. It is recommended
+	 * that tools use three part semantic versioning.
 	 * 
-	 * @return a version number as a string or null
+	 * @return the version number of this tool
 	 */
-	public String getVersion() {
-		return null;
-	}
+	public abstract String getVersion();
 	
 	/**
-	 * Returns the names of the creators of this tool, or null if the authors
-	 * are not known.
+	 * Returns a list of people who made this tool.
 	 * 
-	 * @return the names of the tool authors
+	 * @return the names of this tool's authors
 	 */
-	public String getAuthors() {
-		return null;
-	}
+	public abstract String getAuthors();
 	
 	/**
-	 * Returns a string that includes the {@link #getName() name}, {@link
-	 * #getVersion() version} (if any), and {@link #getAuthors() authors} (if
-	 * any) of this tool.
+	 * Returns the {@link #getName() name}, {@link #getVersion() version}, and
+	 * {@link #getAuthors() authors} of this tool as a string.
 	 * 
 	 * @return the name, version, and authors of this tool
 	 */
 	public String getTitle() {
-		String string = getName();
-		if(getVersion() != null)
-			string += " v" + getVersion();
-		if(getAuthors() != null)
-			string += " by " + getAuthors();
-		return string;
+		return getName() + " v" + getVersion() + " by " + getAuthors();
 	}
 	
 	/**
-	 * Returns a short description of this tool's purpose and use. This
-	 * description is used in the {@link #getHelp() automatically generated
-	 * help text} for this tool.
+	 * Returns a short description of what this tool does.
 	 * 
 	 * @return a description of this tool
 	 */
-	public String getDescription() {
-		return null;
-	}
+	public abstract String getDescription();
 	
 	/**
-	 * Returns a list of {@link Option options} that can be used to configure
-	 * this tool. The keys, values, and descriptions of each option are included
-	 * in the {@link #getHelp() automatically generated help text} for this
-	 * tool.
+	 * Returns a list of {@link Argument arguments} that must be provided
+	 * to configure this tool.
 	 * 
-	 * @return a list of available options that can be used to configure this
-	 * tool
+	 * @return a list of required arguments
 	 */
-	public List<Option> getOptions() {
-		List<Option> list = new ArrayList<>();
-		list.add(HELP);
-		return list;
+	protected List<Argument<?>> getRequiredArguments() {
+		return new ArrayList<>();
 	}
 	
 	/**
-	 * Returns some automatically generated text that explains how to use this
-	 * tool. The text should include the {@link #getName() name}, {@link
-	 * #getVersion() version number} (if any), {@link #getAuthors() authors} (if
-	 * any), {@link #getDescription() description}, and details on how to use
-	 * this tool's {@link #getOptions() configuration options}.
+	 * Returns a list of optional {@link Argument arguments} that may be
+	 * provided to configure this tool.
 	 * 
-	 * @return the help text
+	 * @return a list of optional arguments
 	 */
-	public String getHelp() {
-		String string = getTitle();
-		string += " (using Story Graph Library v" + Settings.VERSION_STRING + ")";
-		if(getDescription() != null)
-			string += "\n" + getDescription();
-		List<Option> options = getOptions();
-		if(options != null && options.size() > 0) {
-			int pad = 0;
-			for(Option option : options)
-				pad = Math.max(pad, usage(option).length());
-			for(Option option : options)
-				string += "\n" + String.format("%-" + pad + "s  %s", usage(option), option.description);
-		}
-		return string;
-	}
-	
-	private static final String usage(Option option) {
-		return "-" + option.key + (option.value == null ? "" : " " + option.value);
+	protected List<Argument<?>> getOptionalArguments() {
+		List<Argument<?>> arguments = new ArrayList<>();
+		arguments.add(HELP);
+		return arguments;
 	}
 	
 	/**
-	 * Compares the {@link Settings#VERSION_STRING version number} of the story
-	 * graph library being used by this tool to the {@link
-	 * StoryGraph#getVersion() version number} of the library used to create the
-	 * given story graph, and if they do not match, prints a warning to the
-	 * console. Note that this method does not check the {@link #getVersion()
-	 * version number of this tool}, only the version number of the story graph
-	 * library used to read, write, and modify the story graph.
+	 * Returns a short string demonstrating how to call this tool from the
+	 * terminal.
 	 * 
-	 * @param graph the story graph whose version will be checked
+	 * @return a short string demonstrating how to call this tool
 	 */
-	public static void checkVersion(StoryGraph graph) {
-		String version = graph.getVersion();
-		if(version == null)
-			System.out.println("Warning: The story graph " + (graph.getTitle() == null ? "" : "\"" + graph.getTitle() + "\" ") + " does not specify what version of the story graph library was used to create it.");
-		else if(!version.equals(Settings.VERSION_STRING))
-			System.out.println("Warning: The story graph " + (graph.getTitle() == null ? "" : "\"" + graph.getTitle() + "\" ") + " was created with version " + version + " of the story graph library, but this tool is using version " + Settings.VERSION_STRING + "; they may not be compatible.");
+	public String getUsage() {
+		String usage = "java ";
+		String command = System.getProperty("sun.java.command").split(" ")[0];
+		if(command.toLowerCase().endsWith(".jar"))
+			usage += "-jar ";
+		usage += command;
+		for(Argument<?> argument : getRequiredArguments())
+			usage += " " + argument.usage;
+		if(getOptionalArguments().size() > 0)
+			usage += " [OPTIONS]";
+		return usage;
 	}
 	
 	/**
-	 * This method runs this tool as a {@link Task story graph task}.
-	 * <p>
-	 * This method is likely to be overridden, but by default it:
-	 * <ul>
-	 * <li>Checks if there are no arguments or if the {@link #HELP help option}
-	 * is present, and if so, prints the {@link #getHelp() help text} and
-	 * terminates.</li>
-	 * <li>Prints the {@link #getTitle() title} of the tool.</li>
-	 * <li>Runs this tools as a {@link Task#run(Status) task}.</li>
-	 * <li>Catches anything {@link Throwable throwable} and, if one is caught,
-	 * prints its {@link Throwable#getMessage() message}.</li>
-	 * </ul>
+	 * Returns documentation for this tool which can be written to the terminal.
+	 * The documentation includes the too's meta-data (such as its name,
+	 * version, and authors) as well as a list of arguments and how to use them.
+	 * 
+	 * @return documentation for this tool which can be written to the terminal
 	 */
-	public void run() {
-		if(arguments.size() == 0 || arguments.contains(HELP)) {
-			System.out.println(getHelp());
-			return;
+	public String getDocumentation() {
+		String doc = getTitle();
+		doc += "\n(using Story Graph library v" + Settings.VERSION_STRING + ")";
+		doc += "\n\nDescription:\n  " + getDescription();
+		doc += "\nUsage:\n  " + getUsage();
+		List<Argument<?>> required = getRequiredArguments();
+		List<Argument<?>> optional = getOptionalArguments();
+		int ulength = 0;
+		for(Argument<?> argument : required)
+			ulength = Math.max(ulength, argument.usage.length());
+		for(Argument<?> argument : optional)
+			ulength = Math.max(ulength, argument.usage.length());
+		if(required.size() > 0) {
+			doc += "\nArguments:";
+			for(Argument<?> argument : required)
+				doc += String.format("\n  %-" + ulength + "s  %s", argument.usage, argument.description);
 		}
-		try {
-			arguments.get(0);
-			for(Option option : getOptions())
-				arguments.getValue(option);
-			arguments.checkUnused();
-			System.out.println(getTitle());
-			Task.run(this, new Status(), true);
+		if(optional.size() > 0) {
+			doc += "\nOptions:";
+			for(Argument<?> argument : optional)
+				doc += String.format("\n  %-" + ulength + "s  %s", argument.usage, argument.description);
 		}
-		catch(Throwable throwable) {
-			System.err.println("Error: " + throwable.getMessage());
-		}
+		return doc;
 	}
 }

@@ -1,6 +1,7 @@
 package edu.uky.cs.nil.sg;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * A custom implementation of a first-in first-out queue which can hold up to
@@ -140,7 +141,7 @@ public class BigQueue<T> implements Iterable<T> {
 	 */
 	public T peek() {
 		if(size() == 0)
-			throw ToolsExceptions.queueEmpty();
+			throw new NoSuchElementException("The queue is empty.");
 		else
 			return front.element;
 	}

@@ -6,8 +6,28 @@
   <version>1.0.0</version>
   <packaging>jar</packaging>
   <name>Story Graph Tools</name>
-  <description>Simple command line tools for generating, pruning, organizing, and exploring story graphs.</description>
+  <description>Simple command line tools for performing operations on story graphs.</description>
   <url>http://github.com/sgware/story-graph-tools</url>
+  <!-- License -->
+  <licenses>
+    <license>
+      <name>GPL-3.0</name>
+      <url>http://opensource.org/license/gpl-3.0</url>
+    </license>
+  </licenses>
+  <!-- Developers -->
+  <developers>
+    <developer>
+      <name>Stephen G. Ware</name>
+      <email>sgware@cs.uky.edu</email>
+    </developer>
+  </developers>
+  <!-- Source Control -->
+  <scm>
+    <connection>scm:git:git://github.com/sgware/story-graph-tools.git</connection>
+    <developerConnection>scm:git:ssh://github.com:sgware/story-graph-tools.git</developerConnection>
+    <url>http://github.com/sgware/story-graph-tools/tree/main</url>
+  </scm>
   <!-- Properties -->
   <properties>
     <!-- UTF-8 Encoding -->
@@ -20,34 +40,17 @@
   </properties>
   <!-- Dependencies -->
   <dependencies>
-    <!-- Story Graph Library -->
     <dependency>
-      <groupId>edu.uky.cs.nil</groupId>
-      <artifactId>story-graph</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-    <!-- Sabre -->
-    <dependency>
-      <groupId>edu.uky.cs.nil</groupId>
-      <artifactId>sabre</artifactId>
-      <version>0.8.0</version>
-    </dependency>
+    <groupId>edu.uky.cs.nil</groupId>
+    <artifactId>story-graph</artifactId>
+    <version>1.1.0</version>
+  </dependency>
   </dependencies>
   <!-- Build -->
   <build>
-    <!-- Resources -->
-    <resources>
-      <!-- Include Java source files in JAR file. -->
-      <resource>
-        <directory>src/main/java</directory>
-        <includes>
-          <include>**/*.java</include>
-        </includes>
-      </resource>
-    </resources>
     <!-- Plugins -->
     <plugins>
-      <!-- Delete files and folders during clean phase. -->
+      <!-- Delete the docs and build folder during the clean phase. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
@@ -56,8 +59,6 @@
           <filesets>
             <fileset>
               <directory>${basedir}/docs</directory>
-            </fileset>
-            <fileset>
               <directory>${basedir}/build</directory>
             </fileset>
           </filesets>
@@ -78,229 +79,249 @@
           </execution>
         </executions>
       </plugin>
-      <!-- Compile each tool as a separate JAR file. -->
+      <!-- Create a JAR for source files. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.4.0</version>
+        <executions>
+          <execution>
+            <id>attach-source</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Create other JAR files. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.8.0</version>
+        <configuration>
+          <descriptors>
+            <descriptor>src/assembly/jar-all.xml</descriptor>
+          </descriptors>
+        </configuration>
         <executions>
-          <!-- sg-gen -->
+          <!-- Library JAR that includes compiled, source, and dependencies. -->
           <execution>
-            <id>sg-gen</id>
+            <id>all</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
-            <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.Generate</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
-              <finalName>sg-gen</finalName>
-              <appendAssemblyId>false</appendAssemblyId>
-            </configuration>
           </execution>
-          <!-- sg-explain -->
+          <!-- Find Explanations Tool -->
           <execution>
-            <id>sg-explain</id>
+            <id>explain</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.Explain</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-explain</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.ExplainTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-rmunx -->
+          <!-- Remove Unexplained Tool -->
           <execution>
-            <id>sg-rmunx</id>
+            <id>rmunx</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.RemoveUnexplained</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-rmunx</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.RemoveUnexplainedTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-rmdis -->
+          <!-- Remove Disconnected Tool -->
           <execution>
-            <id>sg-rmdis</id>
+            <id>rmdis</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.RemoveDisconnected</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-rmdis</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.RemoveDisconnectedTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-rmunu -->
+          <!-- Remove Unused Tool -->
           <execution>
-            <id>sg-rmunu</id>
+            <id>rmunu</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.RemoveUnused</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-rmunu</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.RemoveUnusedTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-rmdup -->
+          <!-- Remove Duplicates Tool -->
           <execution>
-            <id>sg-rmdup</id>
+            <id>rmdup</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.RemoveDuplicates</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-rmdup</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.RemoveDuplicatesTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-sort -->
+          <!-- Sort Tool -->
           <execution>
-            <id>sg-sort</id>
+            <id>sort</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.Sort</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-sort</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.SortTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-clean -->
+          <!-- Clean Tool -->
           <execution>
-            <id>sg-clean</id>
+            <id>clean</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.Clean</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-clean</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.CleanTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
-          <!-- sg-explore -->
+          <!-- Explore Tool -->
           <execution>
-            <id>sg-explore</id>
+            <id>explore</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
             <configuration>
-              <archive>
-                <manifest>
-                  <mainClass>edu.uky.cs.nil.sg.Explore</mainClass>
-                </manifest>
-              </archive>
-              <descriptorRefs>
-                <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
               <finalName>sg-explore</finalName>
               <appendAssemblyId>false</appendAssemblyId>
+              <attach>false</attach>
+              <archive>
+                <manifest>
+                  <mainClass>edu.uky.cs.nil.sg.ExploreTool</mainClass>
+                </manifest>
+              </archive>
             </configuration>
           </execution>
         </executions>
       </plugin>
-      <!-- Copy JavaDoc and JAR files into other folders. -->
+      <!-- Copy JAR file with source into the build/jar folder. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.9.0</version>
+        <executions>
+          <execution>
+            <id>copy-installed</id>
+            <phase>install</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>${project.artifactId}</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>all</classifier>
+                  <type>${project.packaging}</type>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${basedir}/build/jar</outputDirectory>
+              <stripVersion>true</stripVersion>
+              <stripClassifier>true</stripClassifier>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Copy Javadoc and tool JARs into other locations. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.5.0</version>
         <executions>
-          <!-- Copy JavaDoc into docs -->
+          <!-- Copy documentation into the docs folder for GitHub pages. -->
           <execution>
-            <id>copy-javadoc</id>
+            <id>copy-docs</id>
             <phase>package</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
             <configuration>
+              <outputDirectory>${basedir}/docs</outputDirectory>
               <resources>
                 <resource>
-                  <directory>target/reports/apidocs</directory>
+                  <directory>${basedir}/target/reports/apidocs</directory>
                 </resource>
               </resources>
-              <outputDirectory>${basedir}/docs</outputDirectory>
             </configuration>
           </execution>
-          <!-- Copy JAR files into biuld/jar -->
+          <!-- Copy tool JAR files into build/jar. -->
           <execution>
-            <id>copy-jars</id>
+            <id>copy-tools</id>
             <phase>package</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
             <configuration>
+              <outputDirectory>${basedir}/build/jar</outputDirectory>
               <resources>
                 <resource>
                   <directory>${basedir}/target</directory>
                   <includes>
-                    <include>sg-gen.jar</include>
                     <include>sg-explain.jar</include>
                     <include>sg-rmunx.jar</include>
                     <include>sg-rmdis.jar</include>
@@ -312,10 +333,34 @@
                   </includes>
                 </resource>
               </resources>
-              <outputDirectory>${basedir}/build/jar</outputDirectory>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!-- Generate file checksums -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>3.2.8</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Publish to the Maven Central Repository -->
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.11.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+        </configuration>
       </plugin>
     </plugins>
   </build>

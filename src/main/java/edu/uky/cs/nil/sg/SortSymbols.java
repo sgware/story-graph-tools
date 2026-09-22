@@ -11,7 +11,7 @@ import java.util.Comparator;
  */
 public class SortSymbols implements Task {
 	
-	/** A comparator that order story graph symbols by name */
+	/** A comparator that orders story graph symbols by name */
 	public static final Comparator<Symbol> SYMBOL_NAME = new Comparator<>() {
 		
 		@Override
@@ -24,7 +24,7 @@ public class SortSymbols implements Task {
 	protected final SymbolList<?> symbols;
 	
 	/**
-	 * Constructs a new story graph symbol sort task.
+	 * Constructs a story graph symbol sort task.
 	 * 
 	 * @param symbols the list of story graph symbols to sort
 	 */

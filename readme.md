@@ -9,21 +9,20 @@ defines a story's characters (players and NPCs), some fluents (or variables)
 whose values define the current world state, each character's beliefs about the
 current world state, actions that can happen and which characters are taking
 those actions, and utility values that define how desirable a world state is for
-the story's author and for each character. The documentation of the Story Graph
-Library has more details on story graphs.
+the story's author and for each character. The
+[documentation of the Story Graph Library](https://sgware.github.io/story-graph)
+has more details.
 
 This project provides the following tools for using story graphs:
-- `sg-gen`: Generates a story graph from a
-[Sabre](https://github.com/sgware/sabre) narrative planning problem.
 - `sg-explain`: Add explanations to actions that show how the actions can
 improve the story utility and how characters believe the actions can improve
 their utilities.
-- `sg-rmunx`: Remove unexplained non-player character actions (i.e. actions
-taken by NPCs that those characters do not have a reason to take.
+- `sg-rmunx`: Remove unexplained character actions (i.e. actions those
+characters do not have a reason to take).
 - `sg-rmdis`: Remove nodes from the graph which cannot be reached via actions
 or beliefs when starting from node 0.
-- `sg-rmunu`: Remove characters, fluents, values, actions, states, and plan that
-are never used in the story.
+- `sg-rmunu`: Remove characters, fluents, values, actions, states, and plans
+that are never used in the story.
 - `sg-rmdup`: Remove duplicate state and plan objects and replace duplicate
 nodes to save space.
 - `sg-sort`: Sort the symbols in a story graph alphabetically and sort nodes
@@ -50,23 +49,15 @@ story graphs (like
 
 These tools are written in pure Java and depend on this
 [library](https://github.com/sgware/story-graph). You can 
-[download the pre-compiled JAR files here](https://github.com/sgware/story-graph-tools/tree/main/build/jar).
+[download the pre-compiled JAR files here](build/jar).
 
 The [JavaDoc API is here](https://sgware.github.io/story-graph-tools).
 
 You can download and compile these tools from source using
 [Maven](http://maven.apache.org/) like this:
 ```
-git clone https://github.com/sgware/story-graph.git
-cd story-graph
-mvn clean install
-cd ..
-git clone https://github.com/sgware/sabre.git
-cd sabre
-mvn clean install
-cd ..
 git clone https://github.com/sgware/story-graph-tools.git
-cd story-graph-tools
+cd story-graph
 mvn clean install
 ```
 
@@ -91,23 +82,26 @@ You can add these tools to a Maven project's `pom.xml` file like this:
 ```
 # Clone this project.
 git clone https://github.com/sgware/story-graph-tools
-# Clone some example Sabre problems.
-cd story-graph-tools/build/jar
-git clone https://github.com/sgware/sabre-benchmarks
-# Show the help text for the Story Graph Generator tool.
-java -jar sg-gen.jar -h
-# Generate the complete story graph for the MacGuffin problem, making Tom the player character.
-java -jar sg-gen.jar sabre-benchmarks/problems/macguffin.txt -p Tom -o macguffin.zip
-# Add explanations to temporal edges.
-java -jar sg-explain.jar macguffin.zip
-# Explore the graph.
-java -jar sg-explore.jar macguffin.zip
-# Remove actions taken by but not explained for non-player characters.
-java -jar sg-rmunx.jar macguffin.zip -o macguffin-pruned.zip
-# Clean the story graph (equivalent to running sg-rmdis, sg-rmunu, sg-rmdup, sg-sort in order).
-java -jar sg-clean.jar macguffin-pruned.zip
-# Explore the pruned graph.
-java -jar sg-explore.jar macguffin-pruned.zip
+
+# Show documentation for the Remove Duplicates tool.
+java -jar build/jar/sg-gen.jar -help
+
+# Convert the example story graph from a tree to a graph by removing duplicates.
+# Write the resulting graph to an new file named 'graph.zip'.
+java -jar build/jar/sg-rmdup.jar example.zip -out graph.zip
+
+# Add explanations to the actions in the new stroy graph. By default, the new
+# graph is written to the old file.
+java -jar build/jar/sg-explain.jar graph.zip
+
+# Remove actions taken by non-player characters that aren't explained.
+java -jar build/jar/sg-rmunx.jar graph.zip -npc
+
+# Clean the graph (equivalent to running sg-rmdis, sg-rmunu, sg-rmdup, sg-sort).
+java -jar build/jar/sg-clean.jar graph.zip
+
+# Explore the resulting story graph.
+java -jar build/jar/sg-explore.jar graph.zip
 ```
 
 ## Ownership and License

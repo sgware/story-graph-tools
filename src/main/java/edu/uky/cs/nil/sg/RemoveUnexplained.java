@@ -1,84 +1,67 @@
 package edu.uky.cs.nil.sg;
 
 /**
- * A {@link SimpleStoryGraphTool story graph tool} that removes {@link
- * TemporalEdge temporal edges} which are not {@link
- * TemporalEdge#isExplained(Character) explained} for their {@link
- * Action#consenting consenting} {@link Action#isNPC() non-player characters}.
- * In other words, actions taken only by non-player characters that are not
- * explained will always be removed; actions taken only by player characters
- * will never be removed; actions taken jointly by both player and non-player
- * characters will be removed if they are not explained for the non-player
- * characters.
+ * A {@link Task task} that removes the {@link TemporalEdge temporal edges} from
+ * a {@link StoryGraph story graph} if the action is not {@link
+ * TemporalEdge#isExplained(Character) explained} for its {@link
+ * Action#consenting consenting characters}.
+ * <p>
+ * This task can reason separately about {@link Character#isPlayer() player} and
+ * non-player characters. By default, this task removes temporal edges that
+ * require the consent of at least one non-player character but are not
+ * explained for that character. It can also be configured to remove player
+ * edges or edges for all characters.
  * 
  * @author Stephen G. Ware
  */
-public class RemoveUnexplained extends SimpleStoryGraphTool {
+public class RemoveUnexplained implements Task {
+	
+	/** The graph whose duplicate nodes will be removed */
+	public final StoryGraph graph;
+	
+	/** Whether unexplained non-player character actions should be removed */
+	public final boolean npc;
+	
+	/** Whether unexplained player actions should be removed */
+	public final boolean player;
 	
 	/**
-	 * Configures and runs the tool according to its command line arguments.
+	 * Constructs a remove unexplained actions task.
 	 * 
-	 * @param args the command line arguments that configure the tool
+	 * @param graph the story graph whose unexplained actions will be removed
+	 * @param npc whether unexplained non-player character actions should be
+	 * removed
+	 * @param player whether unexplained player actions should be removed
 	 */
-	public static void main(String[] args) {
-		new RemoveUnexplained(args).run();
+	public RemoveUnexplained(StoryGraph graph, boolean npc, boolean player) {
+		this.graph = graph;
+		this.npc = npc;
+		this.player = player;
 	}
 	
 	/**
-	 * Constructs a new unexplained action removal tool.
+	 * Constructs a remove unexplained actions task that removed only
+	 * unexplained actions that at least one non-player character consents to.
 	 * 
-	 * @param arguments the arguments that configure the tool
+	 * @param graph the story graph whose unexplained actions will be removed
 	 */
-	public RemoveUnexplained(ToolArguments arguments) {
-		super(arguments);
-	}
-	
-	/**
-	 * Constructs a new unexplained action removal tool.
-	 * 
-	 * @param args the arguments that configure the tool
-	 */
-	public RemoveUnexplained(String[] args) {
-		this(new ToolArguments(args));
-	}
-	
-	/**
-	 * Constructs a new unexplained action removal tool with the default
-	 * configuration.
-	 */
-	public RemoveUnexplained() {
-		this(new String[0]);
+	public RemoveUnexplained(StoryGraph graph) {
+		this(graph, true, false);
 	}
 	
 	@Override
-	public String getName() {
-		return "Remove Unexplained Actions";
-	}
-	
-	@Override
-	public String getVersion() {
-		return "1.0.0";
-	}
-	
-	@Override
-	public String getAuthors() {
-		return "Stephen G. Ware";
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Removes temporal edges that are not explained for a consenting non-player character. The first argument must be a story graph file.";
-	}
-	
-	@Override
-	protected void run(StoryGraph graph, Status status) throws Exception {
+	public void run(Status status) throws Exception {
 		long before = graph.edges.temporal.size();
 		graph.edges.temporal.remove(edge -> {
-			for(Character consenting : edge.label.consenting)
-				if(!consenting.isPlayer() && !edge.isExplained(consenting))
-					return true;
-			return false;
-		}, status);
+			boolean prune = false;
+			for(Character character : edge.label.consenting) {
+				if(npc && !character.isPlayer() && !edge.isExplained(character))
+					prune = true;
+				else if(player && character.isPlayer() && !edge.isExplained(character))
+					prune = true;
+			}
+			return prune;
+		});
 		status.setMessage("Removed " + (before - graph.edges.temporal.size()) + " unexplained temporal edges");
 	}
 }

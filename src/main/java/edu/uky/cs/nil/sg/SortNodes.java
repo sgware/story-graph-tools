@@ -10,10 +10,10 @@ package edu.uky.cs.nil.sg;
 public class SortNodes implements Task {
 	
 	/** The story graph whose nodes will be sorted */
-	protected final StoryGraph graph;
+	protected StoryGraph graph;
 	
 	/**
-	 * Constructs a new story graph node sort task.
+	 * Constructs a story graph node sort task.
 	 * 
 	 * @param graph the story graph whose nodes will be sorted
 	 */
@@ -23,7 +23,7 @@ public class SortNodes implements Task {
 	
 	@Override
 	public void run(Status status) throws Exception {
-		BreadthFirstSearch search = new BreadthFirstSearch(graph, true);
+		BreadthFirstSearch search = new BreadthFirstSearch(graph);
 		search.run(status);
 		graph.nodes.sort((n1, n2) -> search.getOrder(n1).compareTo(search.getOrder(n2)), status);
 	}

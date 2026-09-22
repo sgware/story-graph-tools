@@ -1,11 +1,13 @@
 package edu.uky.cs.nil.sg;
 
+import java.util.Objects;
+
 /**
  * A {@link BigHashMap hash map} that uses {@link State states} as keys, where
  * two states are considered the same if they {@link State#getValue(Fluent)
  * return the same values} for all {@link Fluent fluents} and {@link
- * State#getUtility() return the same utility values} for all {@link Character
- * characters}.
+ * State#getUtility(Character) return the same utility values} for the author
+ * and all {@link Character characters}.
  * 
  * @param <V> the type of element associated with the states
  * @author Stephen G. Ware
@@ -46,7 +48,7 @@ public class StateHashMap<V> extends BigHashMap<State, V> {
 		long code = 0;
 		if(object instanceof State state) {
 			for(Fluent fluent : graph.fluents)
-				code = code * 31 + Utilities.hashCode(state.getValue(fluent));
+				code = code * 31 + Objects.hashCode(state.getValue(fluent));
 			code = code * 31 + Double.hashCode(state.getUtility());
 			for(Character character : graph.characters)
 				code = code * 31 + Double.hashCode(state.getUtility(character));

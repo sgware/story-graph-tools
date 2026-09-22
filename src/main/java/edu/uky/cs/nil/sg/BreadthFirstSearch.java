@@ -5,6 +5,15 @@ package edu.uky.cs.nil.sg;
  * StoryGraph story graph}, starting at node 0, and labeling each {@link Node
  * node} based on the {@link #getOrder(Node) order} in which it was visited by
  * the search.
+ * <p>
+ * The search follows {@link EpistemicEdge epistemic edges} before {@link
+ * TemporalEdge temporal edges}. In other words, when the search visits a node,
+ * it will follow all epistemic edges out from that node, and then all
+ * epistemic edges out from those nodes, before it follows any temporal edges.
+ * <p>
+ * The search can be configured to visit all nodes in the graph, even if they
+ * are {@link #disconnected disconnected} from node 0, or to stop after it has
+ * visited all nodes connected to node 0.
  * 
  * @author Stephen G. Ware
  */
@@ -19,7 +28,7 @@ public class BreadthFirstSearch implements Task {
 	 */
 	protected final boolean disconnected;
 	
-	/** The order in which each nodes was visited by the search */
+	/** The order in which each node was visited by the search */
 	private final BigArrayList<Long> order;
 	
 	/**
@@ -36,11 +45,11 @@ public class BreadthFirstSearch implements Task {
 	 */
 	private long start = 0;
 	
-	/** The order number to assign to the next node to be visited */
+	/** The order number to assign to the next node that is visited */
 	private long next = 0;
 	
 	/**
-	 * Constructs a new breadth-first search task for a given story graph.
+	 * Constructs a breadth-first search task for a given story graph.
 	 * 
 	 * @param graph the story graph whose nodes will be searched
 	 * @param disconnected true if the search should visit all nodes, even if
@@ -50,7 +59,7 @@ public class BreadthFirstSearch implements Task {
 	public BreadthFirstSearch(StoryGraph graph, boolean disconnected) {
 		this.graph = graph;
 		this.disconnected = disconnected;
-		this.order = new BigArrayList<>(graph.nodes.size());
+		this.order = new BigArrayList<>();
 	}
 	
 	/**
@@ -67,38 +76,40 @@ public class BreadthFirstSearch implements Task {
 	public void run(Status status) throws Exception {
 		status.setMessage("Searching story graph");
 		Node start = findStart();
-		if(start != null) {
-			setOrder(start, Long.MAX_VALUE);
+		if(start != null)
 			temporal.push(start);
-		}
-		int breadth = -1;
+		int breadth = 0;
 		while(temporal.size() > 0) {
 			long size = temporal.size();
-			status.set("Searching breadth " + (++breadth), size);
+			status.set("Searching breadth " + (breadth++), size);
 			for(long i = 0; i < size; i++) {
-				visit(temporal.pop());
-				while(epistemic.size() > 0)
-					visit(epistemic.pop());
+				Node node = temporal.pop();
+				if(setOrder(node, next)) {
+					next++;
+					visit(node);
+				}
+				while(epistemic.size() > 0) {
+					node = epistemic.pop();
+					if(setOrder(node, next)) {
+						next++;
+						visit(node);
+					}
+				}
 				status.increment();
 			}
 			if(temporal.size() == 0 && disconnected) {
 				start = findStart();
-				if(start != null) {
-					setOrder(start, Long.MAX_VALUE);
+				if(start != null)
 					temporal.push(start);
-				}
 			}
 		}
 		status.setMessage("Search complete");
 	}
 	
 	/**
-	 * Returns the order the given nodes was visited during the search, or null
+	 * Returns the order in which a node was visited during the search, or null
 	 * if the node was not visited. The first node visited will have order 0,
-	 * the second order 1, etc. During search, nodes which have been added to
-	 * the queue to be visited later, but not yet visited, may have a value of
-	 * {@link Long#MAX_VALUE}; however, no nodes would have this value after
-	 * the search is complete.
+	 * the second order 1, etc.
 	 * 
 	 * @param node the node whose order number is desired
 	 * @return the order the node was visited during the search
@@ -131,16 +142,15 @@ public class BreadthFirstSearch implements Task {
 	
 	/**
 	 * This method is called when a {@link Node node} is visited during the
-	 * search. By default, it sets the {@link #getOrder(Node) order number} for
-	 * the node visits all of the node's {@link #visit(TemporalEdge) temporal}
-	 * and {@link #visit(EpistemicEdge) epistemic} edges. By default, this
-	 * method will be called at most once per node.
+	 * search.
+	 * <p>
+	 * By default, it visits all of the node's outgoing {@link
+	 * #visit(TemporalEdge) temporal} and {@link #visit(EpistemicEdge)
+	 * epistemic} edges.
 	 * 
 	 * @param node the node to visit
 	 */
 	protected void visit(Node node) {
-		if(setOrder(node, next))
-			next++;
 		for(Action action : graph.actions) {
 			TemporalEdge temporal = node.edges.temporal.out.get(action);
 			if(temporal != null)
@@ -155,35 +165,27 @@ public class BreadthFirstSearch implements Task {
 	
 	/**
 	 * This method is called when a {@link TemporalEdge temporal edge} is
-	 * visited during the search. By default, if the edge's {@link Edge#head
-	 * head} is unvisited, its {@link #getOrder(Node) order number} will be
-	 * marked as {@link Long#MAX_VALUE} and the node will be queued to be
-	 * visited later. By default, this method will be called at most once per
-	 * temporal edge.
+	 * visited during the search.
+	 * <p>
+	 * By default, the edge's {@link Edge#head head nodes} will be queued to
+	 * be visited later.
 	 * 
 	 * @param temporal the temporal edge to visit
 	 */
 	protected void visit(TemporalEdge temporal) {
-		if(getOrder(temporal.head) == null) {
-			setOrder(temporal.head, Long.MAX_VALUE);
-			this.temporal.push(temporal.head);
-		}
+		this.temporal.push(temporal.head);
 	}
 	
 	/**
 	 * This method is called when an {@link EpistemicEdge epistemic edge} is
-	 * visited during the search. By default, if the edge's {@link Edge#head
-	 * head} is unvisited, its {@link #getOrder(Node) order number} will be
-	 * marked as {@link Long#MAX_VALUE} and the node will be queued to be
-	 * visited later. By default, this method will be called at most once per
-	 * epistemic edge.
+	 * visited during the search.
+	 * <p>
+	 * By default, the edge's {@link Edge#head head nodes} will be queued to
+	 * be visited later.
 	 * 
 	 * @param epistemic the epistemic edge to visit
 	 */
 	protected void visit(EpistemicEdge epistemic) {
-		if(getOrder(epistemic.head) == null) {
-			setOrder(epistemic.head, Long.MAX_VALUE);
-			this.epistemic.push(epistemic.head);
-		}
+		this.epistemic.push(epistemic.head);
 	}
 }

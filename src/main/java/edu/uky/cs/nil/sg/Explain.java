@@ -1,220 +1,206 @@
 package edu.uky.cs.nil.sg;
 
-import java.util.List;
-
 /**
- * A {@link SimpleStoryGraphTool story graph tool} that generates {@link
- * Explanation explanations} that will improve the {@link Node#getUtility()
- * author utility} and that {@link Character characters} {@link
- * Node#getBeliefs(Character) believe} will improve {@link
- * Node#getUtility(Character) their utility}.
- * <p>
- * After running this tool, the graph will contain all author explanations
- * (where the {@link Explanation#character character} is null) for plans that
- * can improve the story's utility.
- * <p>
- * It will also contain all character explanations which these properties:
+ * A {@link Task task} that discovers new {@link Explanation explanations} in a
+ * {@link StoryGraph story graph}. Specifically, this task discovers
+ * explanations for all characters that meet the following definition of {@link
+ * #isValid(Explanation) validity}:
  * <ul>
- * <li>The {@link Explanation#getPlan() plan} is possible from the node the
- * character {@link Node#getBeliefs(Character) believes} the current state to
- * be (even if the plan is not actually possible).</li>
- * <li>The plan will improve the character's utility.</li>
- * <li>If the plan has more than one action, then for all actions after the
- * first action, the explanation's character will believe those actions are
- * {@link TemporalEdge#isExplained() explained} for all of their consenting
- * characters</li>
+ * <li>The {@link Explanation#character explanation's character} {@link
+ * Node#getBeliefs(Character) believes} the {@link Explanation#getPlan()
+ * explanation's plan} can be executed.</li>
+ * <li>The explanation's character believes that, after executing the
+ * explanation's plan, their {@link Node#getUtility(Character) utility} will be
+ * higher.</li>
+ * <li>Every action in the explanation's plan that requires the {@link
+ * Action#consents(Character) consent} of other characters is {@link
+ * TemporalEdge#isExplained() explained} for those characters. There is one
+ * exception to this rule. If the first action in the plan requires the consent
+ * of the explanation's character, the other characters who take that first
+ * action (and only the first action) do not need to consent. Consider, for
+ * example, a story where one character (the giver) wants to give a gift to
+ * another (the receiver), but the receiver doesn't realize the give wants to
+ * give the gift. The receiver will still consent to the given action, even
+ * through they don't think the giver will want to take it. However, the
+ * receiver will not form multi-action plans around this gift--i.e. the
+ * receiver will not walk to the giver expected to be given the gift.</li>
+ * <li>The explanation is minimal, meaning it is not possible to leave some of
+ * the actions out of the plan and still achieve the same or higher utility via
+ * only explained actions.</li>
  * </ul>
  * <p>
- * All explanations, for the author or characters, are minimal, meaning the
- * explanation does not contain a strict subsequence of actions which also meets
- * the requirements above and achieves the same or better utility.
+ * When considering a character's beliefs, if a node does not defined an {@link
+ * EpistemicEdge epistemic edge} for that character, this task treats the node
+ * as the character's beliefs (i.e. it acts like there is an epistemic loop edge
+ * defined).
  * <p>
- * Explanation generation can be limited to only plans up to a {@link #limit set
- * length}.
- * <p>
- * Note that the first action in an explanation's plan may not be explained for
- * all (or even any) of its consenting characters. This models the idea that, in
- * the moment, characters want actions to happen which can lead to improving
- * their utility, but they will not anticipate future action that they don't
- * believe will be taken.
- * <p>
- * For example, consider one character purchasing an item they want from a
- * merchant who wants money. The merchant does not know that the character wants
- * the item, so the merchant does not expect the character to consent to buying
- * it, but the merchant will still be happy to consent to the buy action because
- * they will get the money they want. However, the merchant will not form a
- * multi-step plan (such as traveling to the character to sell the item) if they
- * cannot anticipate that the character will buy it.
+ * If the graph already contains explanations, this task will not remove them.
+ * It may re-discover the same explanations, but it will not add duplicates of
+ * explanations that are already in the graph.
  * 
  * @author Stephen G. Ware
  */
-public class Explain extends SimpleStoryGraphTool {
+public class Explain implements Task {
+	
+	/** Represents no limit on the length of explanations plans that will be considered */
+	protected static final int UNLIMITED_DEPTH = 0;
 	
 	/**
-	 * A value representing no {@link #limit limit} on the explanation plan
-	 * length
-	 */
-	public static final int UNLIMITED_LENGTH = 0;
-	
-	/** An option to {@link #limit limit} the explanation plan length */
-	protected static final Option LENGTH = new Option("l", "NUMBER", "plan length limit, or " + UNLIMITED_LENGTH + " for unlimited (default: " + UNLIMITED_LENGTH + ")", Integer.toString(UNLIMITED_LENGTH));
-	
-	/**
-	 * Configures and runs the tool according to its command line arguments.
+	 * Tests whether a candidate explanation is valid according to this task's
+	 * {@link Explain definition of validity}.
 	 * 
-	 * @param args the command line arguments that configure the tool
+	 * @param explanation the explanation whose validity will be tested
+	 * @return true if the explanation is valid, false otherwise
 	 */
-	public static void main(String[] args) {
-		new Explain(args).run();
+	public static boolean isValid(Explanation explanation) {
+		return isValid(explanation.node, explanation.character, explanation.getPlan());
 	}
 	
 	/**
-	 * The maximum length of an {@link Explanation#getPlan() explanation's plan}
-	 * that will be considered during generation
-	 */
-	public final int limit;
-	
-	/**
-	 * Constructs a new explanation generator with a given {@link #limit
-	 * explanation plan length limit}.
+	 * Tests whether a given plan would be a valid {@link Explanation
+	 * explanation} for a given character at a given node according to this
+	 * task's {@link Explain definition of validity}.
 	 * 
-	 * @param arguments the arguments that configure the tool
-	 * @param limit the max length of plans that will be considered for
-	 * explanations
+	 * @param node the node from which the plan should be evaluated
+	 * @param character the character for whom the plan should be evaluated
+	 * @param plan the plan that character is evaluating from the node
+	 * @return true if the explanation is valid, false otherwise
 	 */
-	public Explain(ToolArguments arguments, int limit) {
-		super(arguments);
-		this.limit = limit;
-	}
-	
-	/**
-	 * Constructs a new explanation generator.
-	 * 
-	 * @param arguments the arguments that configure the tool
-	 */
-	public Explain(ToolArguments arguments) {
-		this(arguments, Integer.parseInt(arguments.getValue(LENGTH)));
-	}
-	
-	/**
-	 * Constructs a new explanation generator.
-	 * 
-	 * @param args the arguments that configure the tool
-	 */
-	public Explain(String[] args) {
-		this(new ToolArguments(args));
-	}
-	
-	/**
-	 * Constructs a new explanation generator with the default configuration.
-	 */
-	public Explain() {
-		this(new String[0]);
-	}
-	
-	@Override
-	public String getName() {
-		return "Find Explanations";
-	}
-	
-	@Override
-	public String getVersion() {
-		return "1.0.0";
-	}
-	
-	@Override
-	public String getAuthors() {
-		return "Stephen G. Ware";
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Finds explanations to improve author utility and to improve character utility based on what they believe is possible. The first argument must be a story graph file.";
-	}
-	
-	@Override
-	public List<Option> getOptions() {
-		List<Option> options = super.getOptions();
-		options.add(LENGTH);
-		return options;
-	}
-	
-	@Override
-	protected void run(StoryGraph graph, Status status) throws Exception {
-		status.set("Finding explanations of length 1", graph.edges.temporal.size());
-		long before = graph.explanations.size();
-		PlanTree.Root root = new PlanTree.Root(graph);
-		ExplanationPriorityQueue queue = new ExplanationPriorityQueue();		
-		for(TemporalEdge edge : graph.edges.temporal) {
-			if(edge.tail.getUtility() < edge.head.getUtility())
-				queue.push(new ExplanationTree.Root(edge.head, null, root).prepend(edge));
-			for(Character character : graph.characters)
-				if(edge.tail.getUtility(character) < edge.head.getUtility(character))
-					queue.push(new ExplanationTree.Root(edge.head, character, root).prepend(edge));
-			status.increment();
+	public static boolean isValid(Node node, Character character, Sequence plan) {
+		// Start in the state the character believes to be the case.
+		Node start = node;
+		if(character != null) {
+			start = node.getBeliefs(character);
+			if(start == null)
+				start = node;
 		}
-		int round = 0;
-		boolean loop = true;
-		while(loop) {
-			loop = false;
-			status.set("Finding explanations, round " + (++round), queue.size());
-			ExplanationPriorityQueue next = new ExplanationPriorityQueue();
-			while(queue.size() > 0) {
-				ExplanationTree explanation = queue.pop();
-				if(canExtend(explanation)) {
-					if(explanation.getCharacter() == null)
-						graph.explanations.add(explanation.getStart(), explanation.getPlan());
-					else
-						for(EpistemicEdge edge : explanation.getStart().edges.epistemic.in)
-							if(edge.label == explanation.getCharacter())
-								graph.explanations.add(edge.tail, explanation.getCharacter(), explanation.getPlan());
-					if(explanation.size() < limit || limit == UNLIMITED_LENGTH) {
-						for(TemporalEdge edge : explanation.getStart().edges.temporal.in) {
-							if(explanation.getCharacter() == null || edge.label.consenting.size() > 0) {
-								ExplanationTree extended = explanation.prepend(edge);
-								if(isMinimal(extended)) {
-									next.push(extended);
-									loop = true;
-								}
-							}
-						}
-					}
-				}
-				else
-					next.push(explanation);
-				status.increment();
-			}
-			queue = next;
+		// Check each action in the plan.
+		Node end = start;
+		for(int i = 0; i < plan.size(); i++) {
+			TemporalEdge edge = end.edges.temporal.out.get(plan.get(i));
+			// The action must be possible.
+			if(edge == null)
+				return false;
+			end = edge.head;
+			// Only author plans may contain actions with no consenting characters.
+			if(edge.label.consenting.size() == 0 && character != null)
+				return false;
+			// If the character consents to the first action, explanations for
+			// other character are not needed for that first action.
+			if(i == 0 && character != null && edge.label.consents(character))
+				continue;
+			// Otherwise, the action must be explained for the other consenting
+			// characters who take it.
+			else
+				for(Character other : edge.label.consenting)
+					if(other != character && !edge.isExplained(other))
+						return false;
 		}
-		status.setMessage("Generated " + (graph.explanations.size() - before) + " explanations");
+		// The character must believe the plan will improve their utility.
+		if(start.getUtility(character) >= end.getUtility(character))
+			return false;
+		// The plan cannot contain a strict subsequence of explained actions
+		// that achieves the same or higher utility.
+		return isMinimal(start, character, plan, end.getUtility(character));
 	}
 	
-	private static final boolean canExtend(ExplanationTree explanation) {
-		if(explanation.size() < 2)
-			return true;
-		else
-			return isExplainedForOthers(explanation.get(1), explanation.getCharacter());
+	private static final boolean isMinimal(Node node, Character character, Sequence plan, double goal) {
+		return !findSubsequence(character, node, plan, 0, goal, false);
 	}
 	
-	private static final boolean isMinimal(ExplanationTree explanation) {
-		return !findSubsequence(explanation, 0, explanation.getStart(), false);
-	}
-	
-	private static final boolean findSubsequence(ExplanationTree explanation, int index, Node current, boolean shorter) {
-		if(index == explanation.size())
-			return (current.getUtility(explanation.getCharacter()) >= explanation.getEnd().getUtility(explanation.getCharacter()) && shorter);
-		else if(findSubsequence(explanation, index + 1, current, true))
+	private static final boolean findSubsequence(Character character, Node current, Sequence plan, int index, double goal, boolean shorter) {
+		if(index == plan.size())
+			return current.getUtility(character) >= goal && shorter;
+		else if(findSubsequence(character, current, plan, index + 1, goal, true))
 			return true;
 		else {
-			TemporalEdge edge = current.edges.temporal.out.get(explanation.get(index).label);
-			return edge != null && (index == 0 || isExplainedForOthers(edge, explanation.getCharacter())) && findSubsequence(explanation, index + 1, edge.head, shorter);
+			TemporalEdge edge = current.edges.temporal.out.get(plan.get(index));
+			if(edge == null)
+				return false;
+			if(index > 0 || (character != null && !plan.get(0).consents(character)))
+				for(Character other : edge.label.consenting)
+					if(other != character && !edge.isExplained(other))
+						return false;
+			return findSubsequence(character, edge.head, plan, index + 1, goal, shorter);
 		}
 	}
 	
-	private static final boolean isExplainedForOthers(TemporalEdge edge, Character character) {
-		for(Character other : edge.label.consenting)
-			if(other != character && !edge.isExplained(other))
-				return false;
-		return true;
+	/** The graph whose duplicate nodes will be removed */
+	public final StoryGraph graph;
+	
+	/** The maximum explanation plan length that will be considered */
+	public final int depth;
+	
+	/** Used to add new explanations to the graph */
+	private final NewExplanationSet explanations;
+	
+	/**
+	 * Constructs a generate explanations task with a limit on the max
+	 * explanation plan length.
+	 * 
+	 * @param graph the story graph where explanations will be generated
+	 * @param depth the maximum explanation plan length to consider
+	 */
+	public Explain(StoryGraph graph, int depth) {
+		this.graph = graph;
+		this.depth = depth;
+		this.explanations = new NewExplanationSet(graph);
+	}
+	
+	/**
+	 * Constructs a generate explanations task with no limit on the length of
+	 * explanation plans.
+	 * 
+	 * @param graph the story graph where explanations will be generated
+	 */
+	public Explain(StoryGraph graph) {
+		this(graph, UNLIMITED_DEPTH);
+	}
+	
+	@Override
+	public void run(Status status) throws Exception {
+		int round = 1;
+		boolean repeat;
+		do {
+			repeat = false;
+			status.set("Finding explanations, round " + (round++), graph.nodes.size());
+			for(Node node : graph.nodes) {
+				if(explain(node))
+					repeat = true;
+				status.increment();
+			}
+		} while(repeat);
+		status.setMessage("Found " + explanations.size() + " new explanations");	}
+	
+	private final boolean explain(Node node) {
+		boolean result = explain(node, null);
+		for(Character character : graph.characters)
+			result = explain(node, character) || result;
+		return result;
+	}
+	
+	private final boolean explain(Node node, Character character) {
+		// Get the character's beliefs.
+		Node beliefs = node;
+		if(character != null) {
+			beliefs = node.getBeliefs(character);
+			if(beliefs == null)
+				beliefs = node;
+		}
+		// Consider every action the character believes is possible.
+		boolean result = false;
+		for(TemporalEdge edge : beliefs.edges.temporal.out) {
+			// Consider a 1-action explanation.
+			result = explain(node, character, new TailSequence(edge.label)) || result;
+			// Consider prepending each action to an existing explanation.
+			for(Explanation explanation : edge.head.explanations.get(character))
+				if(explanation.size() < depth || depth == UNLIMITED_DEPTH)
+					result = explain(node, character, new TailSequence(edge.label, explanation)) || result;
+		}
+		return result;
+	}
+	
+	private final boolean explain(Node node, Character character, Sequence plan) {
+		return isValid(node, character, plan) && explanations.add(node, character, plan);
 	}
 }

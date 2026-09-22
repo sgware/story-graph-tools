@@ -2,10 +2,11 @@ package edu.uky.cs.nil.sg;
 
 /**
  * A {@link Task task} that sorts the {@link State states} of a {@link
- * StoryGraph story graph} based on the first {@link Node node} that uses the
- * state. In other words, state s will be ordered before state t if the first
- * node that {@link Node#getState() uses} state s has a lower {@link
- * Node#getID() ID number} than the first node that uses state t.
+ * StoryGraph story graph} ascending based on the {@link Node#getID() ID number}
+ * of the first {@link Node node} that uses the state. In other words, state
+ * <em>s</em> will be ordered before state <em>t</em> if the first node that
+ * {@link Node#getState() uses} state <em>s</em> has a lower ID number than the
+ * first node that uses state <em>t</em>.
  * 
  * @author Stephen G. Ware
  */
@@ -15,7 +16,7 @@ public class SortStates implements Task {
 	protected final StoryGraph graph;
 	
 	/**
-	 * Constructs a new story graph state sort task.
+	 * Constructs a story graph state sort task.
 	 * 
 	 * @param graph the story graph whose states will be sorted
 	 */

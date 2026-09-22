@@ -1,0 +1,25 @@
+--no-fonts
+-classpath
+'C:/Users/Stephen/.m2/repository/edu/uky/cs/nil/story-graph/1.1.0/story-graph-1.1.0.jar'
+-encoding
+'UTF-8'
+-protected
+--release
+21
+-sourcepath
+'C:/Users/Stephen/Documents/Eclipse Workspaces/New Story Graph Tools/story-graph-tools/src/main/java;C:/Users/Stephen/Documents/Eclipse Workspaces/New Story Graph Tools/story-graph-tools/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/Stephen/Documents/Eclipse Workspaces/New Story Graph Tools/story-graph-tools/target/reports/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Story Graph Tools 1.0.0 API'
+-use
+-version
+-windowtitle
+'Story Graph Tools 1.0.0 API'

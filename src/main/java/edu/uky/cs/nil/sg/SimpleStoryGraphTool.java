@@ -1,139 +1,103 @@
 package edu.uky.cs.nil.sg;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A parent class for {@link StoryGraphTool story graph tools} that reads a
- * {@link StoryGraph story graph} from file, {@link #run(StoryGraph, Status)
- * performs an operation} on that graph, and then write the graph back out to
- * file.
+ * A parent class for a {@link StoryGraphTool story graph tool} that reads a
+ * story graph from file, performs an operation on it, and writes the resulting
+ * graph to file.
  * 
  * @author Stephen G. Ware
  */
 public abstract class SimpleStoryGraphTool extends StoryGraphTool {
 	
-	/**
-	 * An option that specifies to where the output story graph will be written,
-	 * defaulting to the same source from which it was read
-	 */
-	protected static final Option OUTPUT = new Option("o", "FILE", "output file or directory (default: same as input)") {
-		
-		@Override
-		public String getDefaultValue(ToolArguments arguments) {
-			return arguments.require(0);
-		}
-	};
+	/** An argument specifying the input story graph file or directory */
+	protected static final Argument<File> INPUT = new Argument.Index<>(0, Argument.FILE, "the story graph");
+	
+	/** An argument specifying the output story graph file or directory */
+	protected static final Argument<File> OUTPUT = new Argument.Key<>("out", Argument.FILE, "output file (default: same as input)");
 	
 	/**
-	 * Constructs a new simple story graph tool from a list of arguments.
-	 * 
-	 * @param arguments the argument used to configure this tool
+	 * Constructs a simple story graph tool.
 	 */
-	public SimpleStoryGraphTool(ToolArguments arguments) {
-		super(arguments);
-	}
-	
-	/**
-	 * Constructs a new simple story graph tool from an array of string
-	 * arguments.
-	 * 
-	 * @param args the arguments used to configure this tool
-	 */
-	public SimpleStoryGraphTool(String[] args) {
-		this(new ToolArguments(args));
+	public SimpleStoryGraphTool() {
+		// default constructor
 	}
 	
 	@Override
-	public List<Option> getOptions() {
-		List<Option> options = super.getOptions();
-		options.add(OUTPUT);
-		return options;
+	protected List<Argument<?>> getRequiredArguments() {
+		List<Argument<?>> arguments = new ArrayList<>();
+		arguments.add(INPUT);
+		for(Argument<?> other : super.getRequiredArguments())
+			arguments.add(other);
+		return arguments;
+	}
+	
+	@Override
+	protected List<Argument<?>> getOptionalArguments() {
+		List<Argument<?>> arguments = super.getOptionalArguments();
+		arguments.add(OUTPUT);
+		return arguments;
 	}
 	
 	/**
-	 * This method:
-	 * <ul>
-	 * <li>Checks if there are no arguments or if the {@link #HELP help option}
-	 * is present, and if so, prints the {@link #getHelp() help text} and
-	 * terminates.</li>
-	 * <li>Checks for {@link ToolArguments#checkUnused() unused arguments}.</li>
-	 * <li>Prints the {@link #getTitle() title} of the tool.</li>
-	 * <li>{@link StoryGraph#read(GraphReader, Status) Reads} the story graph
-	 * from the input source.</li>
-	 * <li>{@link #checkVersion(StoryGraph) Checks the version number} of the
-	 * story graph.</li>
-	 * <li>Prints a {@link GraphSnapshot snapshot} of the graph.</li>
-	 * <li>Runs this tool's {@link #run(StoryGraph, Status) main method} as a
-	 * {@link Task#run(Status) task}.</li>
-	 * <li>Prints a {@link GraphSnapshot snapshot} of the graph after the main
-	 * method.</li>
-	 * <li>{@link StoryGraph#write(GraphWriter, Status) Writes} the story graph
-	 * to the output destination.</li>
-	 * <li>Catches anything {@link Throwable throwable} and, if one is caught,
-	 * prints its {@link Throwable#getMessage() message}.</li>
-	 * </ul>
+	 * Configures this tool according to its {@link Arguments arguments}, reads
+	 * a story graph from file, {@link #run(Arguments, StoryGraph, Status)
+	 * performs an operation} on the graph, writes the result to file, and
+	 * prints a summary of how the story graph {@link StoryGraphChange changed}.
+	 * 
+	 * @param arguments the argument that configure this tool's behavior
+	 * @throws Exception if a problem occurs while configuring the tool,
+	 * performing this tool's operation, or reading and writing the graph
 	 */
-	@Override
-	public void run() {
-		if(arguments.size() == 0 || arguments.contains(HELP)) {
-			System.out.println(getHelp());
+	public void run(Arguments arguments) throws Exception {
+		if(arguments.size() == 0 || arguments.get(HELP)) {
+			System.out.println(getDocumentation());
 			return;
 		}
-		try {
-			arguments.get(0);
-			for(Option option : getOptions())
-				arguments.getValue(option);
-			arguments.checkUnused();
-			System.out.println(getTitle());
-			StoryGraph graph = new StoryGraph();
-			Task.run(status -> readStoryGraph(graph, status), new Status(), true);
-			checkVersion(graph);
-			GraphSnapshot before = new GraphSnapshot(graph);
-			System.out.println(before);
-			Task.run(status -> run(graph, status), new Status(), true);
-			GraphSnapshot after = new GraphSnapshot(graph);
-			System.out.println(GraphSnapshot.toString(before, after));
-			Task.run(status -> writeStoryGraph(graph, status), new Status(), true);
-		}
-		catch(Throwable throwable) {
-			System.err.println("Error: " + throwable.getMessage());
-		}
+		for(Argument<?> required : getRequiredArguments())
+			arguments.require(required);
+		for(Argument<?> optional : getOptionalArguments())
+			arguments.get(optional);
+		arguments.checkUnused();
+		final File input = arguments.require(INPUT);
+		final File output;
+		if(arguments.get(OUTPUT) == null)
+			output = input;
+		else
+			output = arguments.get(OUTPUT);
+		StoryGraphSummary[] summaries = new StoryGraphSummary[2];
+		Task.run(status -> {
+			StoryGraph graph = StoryGraph.from(input, status);
+			String version = graph.meta.getString(MetaData.VERSION);
+			if(!version.equals(Settings.VERSION_STRING))
+				System.err.println("\rWarning: This tool uses version " + Settings.VERSION_STRING + " of the story graph library, but the graph was created with version " + version + ".");
+			summaries[0] = new StoryGraphSummary(graph);
+			graph = run(arguments, graph, status);
+			String message = status.getMessage();
+			summaries[1] = new StoryGraphSummary(graph);
+			graph.write(output, status);
+			status.setMessage(message);
+		});
+		StoryGraphChange change = new StoryGraphChange(summaries[0], summaries[1]);
+		System.out.println(change);
 	}
 	
 	/**
-	 * This method:
-	 * <ul>
-	 * <li>{@link StoryGraph#read(GraphReader, Status) Reads} the story graph
-	 * from the input source.</li>
-	 * <li>Runs this tool's {@link #run(StoryGraph, Status) main method}.</li>
-	 * <li>{@link StoryGraph#write(GraphWriter, Status) Writes} the story graph
-	 * to the output destination.</li>
-	 * </ul>
-	 */
-	@Override
-	public void run(Status status) throws Exception {
-		StoryGraph graph = new StoryGraph();
-		readStoryGraph(graph, status);
-		run(graph, status);
-		writeStoryGraph(graph, status);
-	}
-	
-	private void readStoryGraph(StoryGraph graph, Status status) throws Exception {
-		graph.read(new File(arguments.require(0)), status);
-	}
-	
-	/**
-	 * Performs this tool's operation on the given story graph.
+	 * Performs this tool's operation on the given story graph as defined by the
+	 * given arguments. Before this method is called, the story graph will have
+	 * been read from file. The story graph returned can be either a new graph
+	 * or the same graph given as input.
 	 * 
+	 * @param arguments the arguments that configure this tool's behavior
 	 * @param graph the story graph on which to perform the operation
 	 * @param status a status object that will be updated while this method runs
 	 * to reflect its current progress
-	 * @throws Exception if an exception occurs while this method is running
+	 * @return the story graph that results from the operation (which may be the
+	 * same graph given as input)
+	 * @throws Exception if a problem occurs while the operation is running
 	 */
-	protected abstract void run(StoryGraph graph, Status status) throws Exception;
-	
-	private void writeStoryGraph(StoryGraph graph, Status status) throws Exception {
-		graph.write(new File(arguments.requireValue(OUTPUT)), status);
-	}
+	protected abstract StoryGraph run(Arguments arguments, StoryGraph graph, Status status) throws Exception;
 }

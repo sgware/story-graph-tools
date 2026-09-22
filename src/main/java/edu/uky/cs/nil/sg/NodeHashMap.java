@@ -1,13 +1,16 @@
 package edu.uky.cs.nil.sg;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * A {@link BigHashMap hash map} that uses {@link Node nodes} as keys, where two
- * nodes are considered the same if their {@link Node#getState() states} are the
- * same and, for each {@link Character character}, the {@link
- * Node#getBeliefs(Character) beliefs of that character} lead to nodes which are
- * the same.
+ * nodes are considered the same if they have the same {@link
+ * Node#getValue(Fluent) value} for every {@link Fluent fluent}, the same {@link
+ * Node#getUtility(Character) utility} for every character, and for each {@link
+ * Character character} the {@link Node#getBeliefs(Character) beliefs of that
+ * character} lead to nodes which are the same. {@link TemporalEdge Temporal
+ * edges} are not checked when deciding if two nodes are the same.
  * 
  * @param <V> the type of element associated with the nodes
  * @author Stephen G. Ware
@@ -90,10 +93,10 @@ public class NodeHashMap<V> extends BigHashMap<Node, V> {
 			return true;
 		else if(n1 == null || n2 == null)
 			return false;
-		else if(n1.getState() != n2.getState())
-			return false;
 		else if(pairs.contains(n1, n2))
 			return true;
+		else if(!same(n1.getState(), n2.getState()))
+			return false;
 		else {
 			pairs.add(n1, n2);
 			for(Character character : graph.characters)
@@ -101,6 +104,18 @@ public class NodeHashMap<V> extends BigHashMap<Node, V> {
 					return false;
 			return true;
 		}
+	}
+	
+	private final boolean same(State s1, State s2) {
+		for(Fluent fluent : graph.fluents)
+			if(!Objects.equals(s1.getValue(fluent), s2.getValue(fluent)))
+				return false;
+		if(s1.getUtility() != s2.getUtility())
+			return false;
+		for(Character character : graph.characters)
+			if(s1.getUtility(character) != s2.getUtility(character))
+				return false;
+		return true;
 	}
 	
 	@Override
@@ -114,10 +129,20 @@ public class NodeHashMap<V> extends BigHashMap<Node, V> {
 	private final long hashCode(Node node, int depth) {
 		if(node == null)
 			return 0;
-		long code = node.getState().getID();
+		long code = hashCode(node.getState());
 		if(depth > 0)
 			for(Character character : graph.characters)
 				code = code * 31 + hashCode(node.getBeliefs(character), depth - 1);
+		return code;
+	}
+	
+	private final long hashCode(State state) {
+		long code = 0;
+		for(Fluent fluent : graph.fluents)
+			code = code * 31 + Objects.hashCode(state.getValue(fluent));
+		code = code * 31 + Double.hashCode(state.getUtility());
+		for(Character character : graph.characters)
+			code = code * 31 + Double.hashCode(state.getUtility(character));
 		return code;
 	}
 }

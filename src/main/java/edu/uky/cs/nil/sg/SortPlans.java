@@ -9,14 +9,14 @@ import java.util.Comparator;
  * plans.
  * <p>
  * In other words, plans will be sorted by considering their actions in reverse.
- * This means that first the last actions of two plans is compared, then the
- * second to last actions, and so on. When two plans end with the same actions,
- * the shorter plan is ordered first.
+ * This means that the last actions of two plans is compared, then the second to
+ * last actions, and so on. When two plans end with the same actions, the
+ * shorter plan is ordered first.
  * <p>
  * The end result is this: when possible, a plan is the same as the plan ordered
  * immediately before it, except for possibly its first action. This allows a
- * story graph to save memory by creating tail plans when reading in its list of
- * plans.
+ * story graph to save memory by creating {@link TailPlan tail plans} when
+ * reading in its list of plans.
  * 
  * @author Stephen G. Ware
  */
@@ -42,7 +42,7 @@ public class SortPlans implements Task {
 	protected StoryGraph graph;
 	
 	/**
-	 * Constructs a new story graph plan sort task.
+	 * Constructs a story graph plan sort task.
 	 * 
 	 * @param graph the story graph whose plans will be sorted
 	 */

@@ -1,87 +1,88 @@
 package edu.uky.cs.nil.sg;
 
 /**
- * A {@link SimpleStoryGraphTool story graph tool} that replaces duplicate
- * elements in a {@link StoryGraph story graph} to save memory.
+ * A {@link Task task} that replaces duplicate elements in a {@link StoryGraph
+ * story graph} to save memory.
  * <p>
  * Specifically, after this tool has been run:
  * <ul>
  * <li>All {@link Node nodes} that have the same {@link Node#getState() state}
  * will use the same state object.</li>
- * <li>Any nodes which are duplicates have been replaced so that the graph no
- * longer contains any duplicate nodes. Nodes are considered duplicates if they
- * have all the same {@link Node#getValue(Fluent) fluent values}, all the same
- * {@link Node#getUtility(Character) utilities}, and if their outgoing epistemic
- * and temporal edges lead to equivalent nodes (see the {@link
- * ReplaceDuplicateNodes} task for more detail).</li>
  * <li>All {@link Explanation explanations} that have the same {@link
  * Explanation#getPlan() plan} will use the same plan object.</li>
+ * <li>The graph does not contains two nodes which are equivalent. Two nodes are
+ * considered equivalent if they have the same {@link Node#getState() state},
+ * all the same {@link Node#getUtility(Character) utilities}, all the same
+ * {@link Node#edges edges}, and all of their edges lead to equivalent nodes.
+ * See the {@link RemoveDuplicateNodes} task for more detail.</li>
  * </ul>
  * 
  * @author Stephen G. Ware
  */
-public class RemoveDuplicates extends SimpleStoryGraphTool {
+public class RemoveDuplicates implements Task {
+	
+	/** The graph whose duplicate elements will be removed */
+	public final StoryGraph graph;
+	
+	/** Whether duplicate states should be removed */
+	public boolean states;
+	
+	/** Whether duplicate plans should be removed */
+	public boolean plans;
+	
+	/** Whether duplicate nodes should be removed */
+	public boolean nodes;
 	
 	/**
-	 * Configures and runs the tool according to its command line arguments.
+	 * Constructs a remove duplicate elements task for the given story graph.
 	 * 
-	 * @param args the command line arguments that configure the tool
+	 * @param graph the story graph whose duplicate elements will be removed
+	 * @param states whether duplicate states should be removed
+	 * @param plans whether duplicate plans should be removed
+	 * @param nodes whether duplicate nodes should be removed
 	 */
-	public static void main(String[] args) {
-		new RemoveDuplicates(args).run();
+	public RemoveDuplicates(
+		StoryGraph graph,
+		boolean states,
+		boolean plans,
+		boolean nodes
+	) {
+		this.graph = graph;
+		this.states = states;
+		this.plans = plans;
+		this.nodes = nodes;
 	}
 	
 	/**
-	 * Constructs a new duplicate elements removal tool.
+	 * Constructs a remove duplicate elements task for the given story graph
+	 * that removes all duplicate elements.
 	 * 
-	 * @param arguments the arguments that configure the tool
+	 * @param graph the story graph whose duplicate elements will be removed
 	 */
-	public RemoveDuplicates(ToolArguments arguments) {
-		super(arguments);
-	}
-	
-	/**
-	 * Constructs a new duplicate elements removal tool.
-	 * 
-	 * @param args the arguments that configure the tool
-	 */
-	public RemoveDuplicates(String[] args) {
-		this(new ToolArguments(args));
-	}
-	
-	/**
-	 * Constructs a new duplicate elements removal tool with the default
-	 * configuration.
-	 */
-	public RemoveDuplicates() {
-		this(new String[0]);
+	public RemoveDuplicates(StoryGraph graph) {
+		this(
+			graph,
+			true,
+			true,
+			true
+		);
 	}
 	
 	@Override
-	public String getName() {
-		return "Remove Duplicate Elements";
+	public void run(Status status) throws Exception {
+		long total = 0;
+		if(states)
+			total += run(new RemoveDuplicateStates(graph), graph.states, status);
+		if(plans)
+			total += run(new RemoveDuplicatePlans(graph), graph.plans, status);
+		if(nodes)
+			total += run(new RemoveDuplicateNodes(graph), graph.nodes, status);
+		status.setMessage(total + " duplicate elements removed");
 	}
 	
-	@Override
-	public String getVersion() {
-		return "1.0.0";
-	}
-	
-	@Override
-	public String getAuthors() {
-		return "Stephen G. Ware";
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Removes duplicate states and plans. Replaces nodes whose states are equivalent unless they have temporal edges that lead to non-eqivalent nodes. The first argument must be a story graph file.";
-	}
-	
-	@Override
-	protected void run(StoryGraph graph, Status status) throws Exception {
-		new ReplaceDuplicateStates(graph).run(status);
-		new ReplaceDuplicateNodes(graph).run(status);
-		new ReplaceDuplicatePlans(graph).run(status);
-		status.setMessage("Duplicate elements replaced");
+	private final long run(Task task, NumberedList<?> list, Status status) throws Exception {
+		long before = list.size();
+		task.run(status);
+		return before - list.size();
 	}
 }
