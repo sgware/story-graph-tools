@@ -57,7 +57,7 @@ You can download and compile these tools from source using
 [Maven](http://maven.apache.org/) like this:
 ```
 git clone https://github.com/sgware/story-graph-tools.git
-cd story-graph
+cd story-graph-tools
 mvn clean install
 ```
 
@@ -82,9 +82,10 @@ You can add these tools to a Maven project's `pom.xml` file like this:
 ```
 # Clone this project.
 git clone https://github.com/sgware/story-graph-tools
+cd story-graph-tools
 
 # Show documentation for the Remove Duplicates tool.
-java -jar build/jar/sg-gen.jar -help
+java -jar build/jar/sg-rmdup.jar -help
 
 # Convert the example story graph from a tree to a graph by removing duplicates.
 # Write the resulting graph to an new file named 'graph.zip'.

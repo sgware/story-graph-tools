@@ -10,6 +10,16 @@ package edu.uky.cs.nil.sg;
 public class CleanTool extends SimpleStoryGraphTool {
 	
 	/**
+	 * The main entry point for the clean tool.
+	 * 
+	 * @param args the arguments passed to this tool from the terminal
+	 * @throws Exception if a problem occurs while running this tool
+	 */
+	public static void main(String[] args) throws Exception {
+		new CleanTool().run(new Arguments(args));
+	}
+	
+	/**
 	 * Constructs a story graph clean tool.
 	 */
 	public CleanTool() {
