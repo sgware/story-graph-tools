@@ -132,7 +132,7 @@ public class BigHashMap<K, V> extends BigMap<K, V> {
 				current = current.next;
 			else {
 				current = null;
-				while(current == null && index < buckets.capacity())
+				while(current == null && index < buckets.capacity() - 1)
 					current = buckets.get(++index);
 			}
 		}
@@ -171,6 +171,8 @@ public class BigHashMap<K, V> extends BigMap<K, V> {
 			addEntry(new HashEntry<>(key, code, value));
 			size++;
 		}
+		else
+			entry.setValue(value);
 		if(size() > buckets.size())
 			rehash();
 	}
@@ -182,8 +184,10 @@ public class BigHashMap<K, V> extends BigMap<K, V> {
 		HashEntry<K, V> entry = buckets.get(bucket);
 		if(entry == null)
 			return;
-		else if(code == entry.code && equals(key, entry.key))
+		else if(code == entry.code && equals(key, entry.key)) {
 			buckets.set(bucket, entry.next);
+			size--;
+		}
 		else {
 			HashEntry<K, V> previous = entry;
 			while(previous.next != null) {
