@@ -70,7 +70,7 @@ You can add these tools to a Maven project's `pom.xml` file like this:
     <dependency>
       <groupId>edu.uky.cs.nil</groupId>
       <artifactId>story-graph-tools</artifactId>
-      <version>1.0.0</version> <!-- use most recent version -->
+      <version>1.0.1</version> <!-- use most recent version -->
     </dependency>
   </dependencies>
   ...
@@ -131,19 +131,20 @@ software for other kinds of projects.
 
 ## Version History
 
+- Version 1.0.1: Fixed bugs in BigHashMap and added BigHashSet.
 - Version 1.0.0: First public release.
 
 ## Citation
 
 Please cite this library like this:
 
-> Stephen G. Ware, "Story Graph Tools," GitHub, 2025.
+> Stephen G. Ware, "Story Graph Tools," GitHub, 2026.
 > https://github.com/sgware/story-graph-tools
 
 BiBTeX entry:
 
 ```
-@misc{ware2025storygraph,
+@misc{ware2026storygraph,
   author={Ware, Stephen G.},
   title={Story Graph Tools},
   publisher={GitHub},
